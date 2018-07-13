@@ -10,6 +10,26 @@ class TestCase(unittest.TestCase):
             if sys.version_info[0] < 3
             else unittest.TestCase.assertRaisesRegex(self, *args, **kwargs))
 
+def get_clause(m,lits):
+    ## Deduce clause after GJE
+    return gje.deduce_clause(m,lits)
+
+def cols_state_to_matrix(state):
+    ## Parse columns state to matrix
+    return gje.columns_state_to_matrix(state)
+
+def xor_columns(col,parity):
+    ## XOR parity column with parity column
+    return gje.xor_columns(col,parity)
+
+def swap_row(m,i,j):
+    ## Swap Rows m[i] with m[j]
+    return gje.swap(m,i,j)
+    
+def xor_row(m,i,j):
+    ## XOR Rows m[i] with m[j]
+    return gje.xor(m,i,j)
+    
 def check_sat(m):
     ## Check SAT
     return gje.check_sat(m)
@@ -29,12 +49,98 @@ def solve_gje(m, show):
 
 class TestProgramTransformer(TestCase):
     """
+    Parse the columns state to a binary matrix and return the list of literals
+    """
+    def test_column_state_to_matrix(self):
+        self.assertEqual(cols_state_to_matrix(
+        {'parity': [0, 1, 1, 0, 0], 2L: [1, 0, 0, 1, 0], 3L: [0, 0, 0, 0, 1], 4L: [1, 1, 0, 0, 0], 5L: [0, 1, 0, 0, 0], 6L: [1, 1, 0, 0, 0], 7L: [0, 0, 1, 0, 1], 8L: [0, 0, 1, 0, 0], 9L: [0, 0, 0, 1, 0], 10L: [0, 0, 0, 1, 0]}),
+                         ([[1,0,1,0,1,0,0,0,0,0],
+                           [0,0,1,1,1,0,0,0,0,1],
+                           [0,0,0,0,0,1,1,0,0,1],
+                           [1,0,0,0,0,0,0,1,1,0],
+                           [0,1,0,0,0,1,0,0,0,0]],[2,3,4,5,6,7,8,9,10]))
+
+
+    """
+    Deduce clause after Gauss-Jordan Elimination
+    """
+    def test_imply_clause_one(self):
+        self.assertEqual(get_clause([[1, 0, 0, 0],
+                                     [0, 1, 1, 0],
+                                     [0, 0, 0, 0]], [2,3,4]), [-2])
+
+    def test_imply_clause_two(self):
+        self.assertEqual(get_clause([[1, 0, 0, 0],
+                                     [0, 1, 0, 0],
+                                     [0, 0, 1, 1]], [2,3,4]), [-2,-3,4])
+
+    def test_imply_clause_three(self):
+        self.assertEqual(get_clause([[1, 0, 1, 1, 0, 1],
+                                     [0, 1, 1, 0, 0, 0],
+                                     [1, 0, 1, 1, 1, 0]], [2,3,4,5,6]), [])
+
+        
+    """
+    XOR a single column with Parity column Tests
+    """
+    def test_column_xor_one(self):
+        self.assertEqual(xor_columns([1, 0],[1, 0]),[0, 0])
+
+    def test_column_xor_two(self):
+        self.assertEqual(xor_columns([0, 0, 0, 0, 0],[1, 1, 1, 1, 1]),[1, 1, 1, 1, 1])
+
+    def test_column_xor_three(self):
+        self.assertEqual(xor_columns([0, 1, 0, 1],[1, 0, 1, 0]),[1, 1, 1, 1])
+
+    
+        
+    """
+    Swap Rows Tests
+    """
+    def test_swap_one(self):
+        self.assertEqual(swap_row([[1, 0, 1, 1, 1, 1],
+                                   [1, 1, 0, 1, 0, 1],
+                                   [1, 0, 0, 0, 0, 1]], 1, 2),[[1, 0, 1, 1, 1, 1],
+                                                               [1, 0, 0, 0, 0, 1],
+                                                               [1, 1, 0, 1, 0, 1]])
+
+    def test_swap_two(self):
+        self.assertEqual(swap_row([[0, 0],
+                                   [1, 1]], 1, 0),[[1, 1],
+                                                   [0, 0]])
+
+    def test_swap_three(self):
+        self.assertEqual(swap_row([[0, 1],
+                                   [1, 0]], 1, 0),[[1, 0],
+                                                   [0, 1]])
+
+    """
+    XOR Rows Tests
+    """
+    def test_xor_one(self):
+        self.assertEqual(xor_row([[1, 0],
+                                  [1, 1],
+                                  [1, 0]], 0, 1),[[1, 0],
+                                                  [0, 1],
+                                                  [1, 0]])
+
+    def test_xor_two(self):
+        self.assertEqual(xor_row([[0, 0],
+                                  [1, 1]], 1, 0),[[1, 1],
+                                                  [1, 1]])
+
+    def test_xor_three(self):
+        self.assertEqual(xor_row([[0, 0],
+                                  [0, 0]], 1, 0),[[0, 0],
+                                                  [0, 0]])
+
+        
+    """
+    Gauss-Jordan Elimination Tests
+
     The second parameter in the solve function is a flag.
     If True, it will display the GJ Elimination Procedure
-    """
 
-    """ 
-    Gauss-Jorda Elimination Tests
     """
 
     ## No GJE due matrix size. Return the same matrix to check SAT

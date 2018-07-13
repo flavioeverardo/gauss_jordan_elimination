@@ -85,15 +85,9 @@ def check_sat(m):
 def deduce_clause(m, lits):
     """ If no conflict, deduce the implications after GJE """
     clause = []
-    mm = []
-    m = np.array(m)
 
     #Pre work... Remove rows with all zeros
-    sums = m.sum(axis=1)
-    for i in range(len(sums)):
-        if sums[i] != 0:
-            mm.append(m[i].tolist())
-
+    mm = remove_rows_zeros(m)
     matrix = np.array(mm)
 
     ## If empty matrix, means there are no implications
